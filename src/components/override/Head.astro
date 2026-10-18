@@ -1,0 +1,414 @@
+---
+import DefaultHead from '@astrojs/starlight/components/Head.astro';
+import { ClientRouter } from 'astro:transitions';
+---
+
+<DefaultHead {...Astro.props} />
+<ClientRouter />
+
+<script is:inline>
+  // 保留左侧导航栏的滚动位置。
+  // Starlight 自带的 SidebarPersister 只在 pageHide/visibilitychange 时保存，
+  // 客户端路由（ClientRouter）切换页面时不会触发，导致侧栏跳回顶部。
+  (() => {
+    const STORAGE_KEY = 'easytier-sidebar-scroll';
+    const getSidebar = () => document.getElementById('starlight__sidebar');
+
+    const canPersist = () => window.matchMedia('(min-width: 50em)').matches;
+
+    const save = () => {
+      if (!canPersist()) return;
+      const el = getSidebar();
+      if (!el) return;
+      try {
+        sessionStorage.setItem(STORAGE_KEY, String(el.scrollTop));
+      } catch {}
+    };
+
+    const restore = () => {
+      if (!canPersist()) return;
+      const el = getSidebar();
+      if (!el) return;
+      let value = 0;
+      try {
+        value = Number(sessionStorage.getItem(STORAGE_KEY) || 0);
+      } catch {}
+      if (!Number.isFinite(value) || value <= 0) return;
+      el.scrollTop = value;
+    };
+
+    document.addEventListener('astro:before-swap', save);
+    document.addEventListener('astro:after-swap', () => {
+      requestAnimationFrame(restore);
+    });
+    document.addEventListener('astro:page-load', () => {
+      requestAnimationFrame(restore);
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') save();
+    });
+    window.addEventListener('pagehide', save);
+  })();
+</script>
+
+<script is:inline>
+  (function() {
+    var canvas = null;
+    var ctx = null;
+    var width = 0;
+    var height = 0;
+    var particles = [];
+    var mouseX = -1000;
+    var mouseY = -1000;
+    var isDark = document.documentElement.dataset.theme === 'dark';
+    var animationId = 0;
+    var eventsBound = false;
+    var resizeTimer;
+
+    var CONFIG = {
+      maxDistance: 140,
+      mouseRadius: 100,
+      particleMinSize: 1.5,
+      particleMaxSize: 2.5,
+      particleMinSpeed: 0.08,
+      particleMaxSpeed: 0.2,
+    };
+
+    function getColors() {
+      return isDark
+        ? { particle: 'rgba(167,139,250,0.65)', line: 'rgba(167,139,250,' }
+        : { particle: 'rgba(124,58,237,0.42)', line: 'rgba(124,58,237,' };
+    }
+
+    function Particle() {
+      this.x = Math.random() * width;
+      this.y = Math.random() * height;
+      var speed = CONFIG.particleMinSpeed + Math.random() * (CONFIG.particleMaxSpeed - CONFIG.particleMinSpeed);
+      var angle = Math.random() * Math.PI * 2;
+      this.vx = Math.cos(angle) * speed;
+      this.vy = Math.sin(angle) * speed;
+      this.size = CONFIG.particleMinSize + Math.random() * (CONFIG.particleMaxSize - CONFIG.particleMinSize);
+    }
+
+    Particle.prototype.update = function() {
+      var dx = mouseX - this.x;
+      var dy = mouseY - this.y;
+      var dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < CONFIG.mouseRadius && dist > 0) {
+        var force = (CONFIG.mouseRadius - dist) / CONFIG.mouseRadius;
+        this.vx += (dx / dist) * force * 0.02;
+        this.vy += (dy / dist) * force * 0.02;
+      }
+      var currentSpeed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+      var maxSpeed = CONFIG.particleMaxSpeed * 1.5;
+      if (currentSpeed > maxSpeed) {
+        this.vx = (this.vx / currentSpeed) * maxSpeed;
+        this.vy = (this.vy / currentSpeed) * maxSpeed;
+      }
+      this.x += this.vx;
+      this.y += this.vy;
+      if (this.x < -10) this.x = width + 10;
+      if (this.x > width + 10) this.x = -10;
+      if (this.y < -10) this.y = height + 10;
+      if (this.y > height + 10) this.y = -10;
+    };
+
+    Particle.prototype.draw = function() {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fillStyle = getColors().particle;
+      ctx.fill();
+    };
+
+    function calcParticleCount() {
+      var area = width * height;
+      return Math.max(40, Math.min(120, Math.floor(area / 12000)));
+    }
+
+    function createParticles() {
+      var count = calcParticleCount();
+      particles = [];
+      for (var i = 0; i < count; i++) {
+        particles.push(new Particle());
+      }
+    }
+
+    function resize() {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+      var targetCount = calcParticleCount();
+      if (Math.abs(particles.length - targetCount) > 5) {
+        createParticles();
+      }
+    }
+
+    function drawLines() {
+      var colors = getColors();
+      var maxChecks = Math.min(particles.length, 50);
+      var step = Math.max(1, Math.floor(particles.length / maxChecks));
+      for (var i = 0; i < particles.length; i += step) {
+        var a = particles[i];
+        var checked = 0;
+        for (var j = i + 1; j < particles.length && checked < 15; j++) {
+          var b = particles[j];
+          var dx = a.x - b.x;
+          var dy = a.y - b.y;
+          var dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < CONFIG.maxDistance) {
+            var opacity = (1 - dist / CONFIG.maxDistance) * 0.3;
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.strokeStyle = colors.line + opacity + ')';
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+            checked++;
+          }
+        }
+      }
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, width, height);
+      for (var i = 0; i < particles.length; i++) {
+        particles[i].update();
+      }
+      drawLines();
+      for (var i = 0; i < particles.length; i++) {
+        particles[i].draw();
+      }
+      animationId = requestAnimationFrame(animate);
+    }
+
+    function onMouseMove(e) {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    }
+
+    function onMouseLeave() {
+      mouseX = -1000;
+      mouseY = -1000;
+    }
+
+    function onThemeChange() {
+      isDark = document.documentElement.dataset.theme === 'dark';
+    }
+
+    function onResize() {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(resize, 200);
+    }
+
+    function cleanup() {
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+        animationId = 0;
+      }
+      if (resizeTimer) {
+        clearTimeout(resizeTimer);
+        resizeTimer = null;
+      }
+      var old = document.getElementById('particle-canvas');
+      if (old) old.remove();
+      canvas = null;
+      ctx = null;
+      particles = [];
+    }
+
+    function init() {
+      if (!document.body) {
+        document.addEventListener('DOMContentLoaded', init);
+        return;
+      }
+
+      cleanup();
+
+      canvas = document.createElement('canvas');
+      canvas.id = 'particle-canvas';
+      ctx = canvas.getContext('2d');
+
+      canvas.style.position = 'fixed';
+      canvas.style.top = '0';
+      canvas.style.left = '0';
+      canvas.style.zIndex = '0';
+      canvas.style.pointerEvents = 'none';
+      document.body.prepend(canvas);
+
+      resize();
+      createParticles();
+
+      if (!eventsBound) {
+        window.addEventListener('mousemove', onMouseMove, { passive: true });
+        window.addEventListener('mouseleave', onMouseLeave);
+        window.addEventListener('resize', onResize);
+
+        var observer = new MutationObserver(onThemeChange);
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+        eventsBound = true;
+      }
+
+      var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+      if (reduceMotion.matches) {
+        for (var i = 0; i < particles.length; i++) {
+          particles[i].draw();
+        }
+        drawLines();
+        return;
+      }
+
+      animate();
+    }
+
+    init();
+
+    document.addEventListener('astro:after-swap', init);
+  })();
+</script>
+
+<script>
+  // ===== Mermaid 流程图客户端渲染 =====
+  // 查找 Starlight/expressive-code 渲染的 mermaid 代码块（<pre data-language="mermaid">），
+  // 替换为 <div class="mermaid"> 并调用 mermaid 渲染。
+  // 兼容 View Transitions（astro:after-swap 后重新渲染）与明暗主题切换（监听 data-theme）。
+  (async () => {
+    /** @type {Map<HTMLElement, string>} 渲染容器 -> 图源代码 */
+    const rendered = new Map();
+    let renderId = 0;
+
+    function isDark() {
+      return document.documentElement.dataset.theme === 'dark';
+    }
+
+    // 从 expressive-code 的行结构中还原代码文本
+    function extractCode(pre) {
+      const codeEl = pre.querySelector('code') || pre;
+      const lineEls = codeEl.querySelectorAll('.ec-line');
+      if (lineEls.length) {
+        return Array.from(lineEls)
+          .map((line) => {
+            const content = line.querySelector('.code');
+            return (content ? content.textContent : line.textContent) || '';
+          })
+          .join('\n')
+          .trim();
+      }
+      return (codeEl.innerText || codeEl.textContent || '').trim();
+    }
+
+    function findBlocks() {
+      return Array.from(document.querySelectorAll('pre[data-language="mermaid"]'));
+    }
+
+    let mermaidApiPromise = null;
+    function getMermaid() {
+      if (!mermaidApiPromise) {
+        // Vite 的 ESM 互操作：默认导出在 default 上，兼容具名导出。
+        mermaidApiPromise = import('mermaid').then((m) => m.default ?? m);
+      }
+      return mermaidApiPromise;
+    }
+
+    async function configure(mermaid) {
+      mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: 'loose',
+        theme: isDark() ? 'dark' : 'default',
+      });
+    }
+
+    // 渲染单个容器，失败时降级为原始代码块
+    async function renderNode(container, code) {
+      const mermaid = await getMermaid();
+      renderId += 1;
+      const { svg } = await mermaid.render('mermaid-' + renderId, code);
+      container.innerHTML = svg;
+    }
+
+    async function renderAll() {
+      const mermaid = await getMermaid();
+      await configure(mermaid);
+
+      // 收集新出现的代码块并替换为渲染容器
+      for (const pre of findBlocks()) {
+        if (pre.dataset.mermaidProcessed) continue;
+        pre.dataset.mermaidProcessed = 'true';
+        const code = extractCode(pre);
+        const container = document.createElement('div');
+        container.className = 'mermaid';
+        container.textContent = code;
+        const wrapper = pre.closest('.expressive-code') || pre.closest('figure') || pre;
+        wrapper.replaceWith(container);
+        rendered.set(container, code);
+      }
+
+      // 渲染（含主题切换后的重渲染）
+      for (const [container, code] of Array.from(rendered)) {
+        if (!container.isConnected) {
+          rendered.delete(container);
+          continue;
+        }
+        if (!container.querySelector('svg')) {
+          try {
+            await renderNode(container, code);
+          } catch (err) {
+            console.error('[mermaid] 渲染失败，降级显示源代码:', err);
+            const pre = document.createElement('pre');
+            const codeEl = document.createElement('code');
+            codeEl.className = 'language-mermaid';
+            codeEl.textContent = code;
+            pre.appendChild(codeEl);
+            container.replaceWith(pre);
+            rendered.delete(container);
+          }
+        }
+      }
+    }
+
+    // 主题切换时清空已渲染图表并重渲染
+    let lastTheme = isDark() ? 'dark' : 'light';
+    const themeObserver = new MutationObserver(() => {
+      const current = isDark() ? 'dark' : 'light';
+      if (current === lastTheme || rendered.size === 0) return;
+      lastTheme = current;
+      getMermaid()
+        .then(async (mermaid) => {
+          await configure(mermaid);
+          for (const [container, code] of Array.from(rendered)) {
+            if (!container.isConnected) continue;
+            container.textContent = code;
+            try {
+              await renderNode(container, code);
+            } catch (err) {
+              console.error('[mermaid] 主题切换后渲染失败:', err);
+            }
+          }
+        })
+        .catch((err) => console.error('[mermaid] 加载失败:', err));
+    });
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+    // 串行化渲染，避免初始加载与客户端导航同时触发时重复渲染。
+    let renderQueue = Promise.resolve();
+    const scheduleRender = () => {
+      renderQueue = renderQueue
+        .then(() => renderAll())
+        .catch((err) => console.error('[mermaid] 渲染错误:', err));
+    };
+
+    // 初始加载：等 DOM 解析完成，避免 Mermaid 模块先于正文加载导致找不到代码块。
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', scheduleRender, { once: true });
+    } else {
+      scheduleRender();
+    }
+
+    // ClientRouter 初次加载与每次客户端换页后都会触发。
+    document.addEventListener('astro:page-load', scheduleRender);
+    document.addEventListener('astro:after-swap', scheduleRender);
+    // 兜底：极慢/极快加载下都再检查一次。
+    window.addEventListener('load', scheduleRender, { once: true });
+  })();
+</script>

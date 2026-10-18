@@ -1,0 +1,289 @@
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+
+/* ============================================================
+   EasyTier-ESP 文档站主题
+   品牌色：紫色（取自项目 logo）
+   ============================================================ */
+
+:root {
+  --sl-font: 'Inter', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --sl-font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
+
+  /* 紫色强调色（暗色主题） */
+  --sl-color-accent-low: #2e1065;
+  --sl-color-accent: #a78bfa;
+  --sl-color-accent-high: #ede9fe;
+
+  /* 动效变量 */
+  --tt-transition-fast: 150ms;
+  --tt-transition-normal: 220ms;
+  --tt-easing: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+:root[data-theme='light'] {
+  --sl-color-accent-low: #ede9fe;
+  --sl-color-accent: #7c3aed;
+  --sl-color-accent-high: #4c1d95;
+}
+
+/* 页面背景：深紫底色 + 两团低透明度光晕 */
+body {
+  background-color: var(--sl-color-bg);
+  background-image:
+    radial-gradient(52rem 34rem at 8% -8%, rgba(139, 92, 246, 0.16), transparent 62%),
+    radial-gradient(46rem 30rem at 108% 4%, rgba(167, 139, 250, 0.1), transparent 60%);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+
+:root[data-theme='light'] body {
+  background-image:
+    radial-gradient(52rem 34rem at 8% -8%, rgba(124, 58, 237, 0.08), transparent 62%),
+    radial-gradient(46rem 30rem at 108% 4%, rgba(139, 92, 246, 0.06), transparent 60%);
+}
+
+::selection {
+  background: rgba(139, 92, 246, 0.35);
+}
+
+/* 粒子背景层（Head.astro 创建） */
+#particle-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+/* 确保内容在粒子层之上；不要覆盖 header/sidebar 的 fixed 定位 */
+.page,
+.main-frame {
+  position: relative;
+  z-index: 1;
+}
+
+/* ============================================================
+   顶栏 / 侧栏：轻微毛玻璃
+   ============================================================ */
+
+header.header {
+  background-color: color-mix(in srgb, var(--sl-color-bg) 82%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid color-mix(in srgb, var(--sl-color-accent) 16%, transparent);
+}
+
+.sidebar-pane {
+  background-color: color-mix(in srgb, var(--sl-color-bg) 88%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-inline-end: 1px solid color-mix(in srgb, var(--sl-color-accent) 12%, transparent);
+}
+
+.sidebar-content a[aria-current='page'] {
+  color: var(--sl-color-accent-high);
+  background: color-mix(in srgb, var(--sl-color-accent) 16%, transparent);
+  border-radius: 0.45rem;
+  font-weight: 600;
+}
+
+.sidebar-content a {
+  transition: color var(--tt-transition-fast) var(--tt-easing),
+    background-color var(--tt-transition-fast) var(--tt-easing);
+}
+
+/* ============================================================
+   首页 Hero
+   ============================================================ */
+
+.hero {
+  padding-block: clamp(2rem, 5vw, 4rem) 1rem;
+}
+
+.hero h1 {
+  letter-spacing: -0.02em;
+}
+
+.hero > img,
+.hero > .hero-html {
+  filter: drop-shadow(0 24px 48px rgba(139, 92, 246, 0.28));
+}
+
+@media (min-width: 50rem) {
+  .hero > img {
+    max-width: 22rem;
+    height: auto;
+  }
+}
+
+.hero .actions {
+  gap: 0.75rem;
+}
+
+.sl-link-button {
+  transition: transform var(--tt-transition-fast) var(--tt-easing),
+    box-shadow var(--tt-transition-fast) var(--tt-easing),
+    background-color var(--tt-transition-fast) var(--tt-easing);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .sl-link-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(139, 92, 246, 0.22);
+  }
+}
+
+/* ============================================================
+   卡片 / 链接卡片
+   ============================================================ */
+
+.sl-card {
+  border-radius: 0.9rem;
+  border-color: color-mix(in srgb, var(--sl-color-accent) 18%, transparent);
+  background: color-mix(in srgb, var(--sl-color-bg) 86%, var(--sl-color-accent) 4%);
+  transition: transform var(--tt-transition-normal) var(--tt-easing),
+    border-color var(--tt-transition-normal) var(--tt-easing),
+    box-shadow var(--tt-transition-normal) var(--tt-easing);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .sl-card:hover {
+    transform: translateY(-3px);
+    border-color: color-mix(in srgb, var(--sl-color-accent) 48%, transparent);
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.18);
+  }
+}
+
+.sl-link-card {
+  border-radius: 0.9rem;
+}
+
+.sl-link-card:hover .icon {
+  transform: translateX(3px);
+}
+
+.sl-link-card .icon {
+  transition: transform var(--tt-transition-fast) var(--tt-easing);
+}
+
+/* ============================================================
+   正文排版
+   ============================================================ */
+
+.sl-markdown-content {
+  --sl-content-width: 52rem;
+}
+
+.sl-markdown-content h2 {
+  margin-top: 2.4rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--sl-color-accent) 14%, transparent);
+}
+
+.sl-markdown-content h3 {
+  margin-top: 1.8rem;
+}
+
+.sl-markdown-content table {
+  font-size: 0.92rem;
+}
+
+.sl-markdown-content th {
+  background: color-mix(in srgb, var(--sl-color-accent) 10%, transparent);
+}
+
+.sl-markdown-content td,
+.sl-markdown-content th {
+  border-color: color-mix(in srgb, var(--sl-color-accent) 14%, transparent);
+}
+
+.sl-markdown-content :not(pre) > code {
+  border-radius: 0.35rem;
+  background: color-mix(in srgb, var(--sl-color-accent) 12%, transparent);
+  padding: 0.12em 0.35em;
+}
+
+.expressive-code {
+  margin-block: 1rem 1.5rem;
+}
+
+.expressive-code .frame {
+  border-radius: 0.75rem;
+}
+
+/* Mermaid 图表 */
+.mermaid {
+  display: flex;
+  justify-content: center;
+  margin: 1.5rem 0;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.mermaid svg {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+}
+
+/* ============================================================
+   动效
+   ============================================================ */
+
+
+@keyframes tt-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================
+   细节
+   ============================================================ */
+
+:focus-visible {
+  outline: 2px solid var(--sl-color-accent);
+  outline-offset: 2px;
+}
+
+a {
+  transition: color var(--tt-transition-fast) var(--tt-easing);
+}
+
+img {
+  border-radius: 0.65rem;
+}
+
+/* 滚动条 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--sl-color-accent) 45%, transparent) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--sl-color-accent) 40%, transparent);
+  border-radius: 999px;
+}
