@@ -1,11 +1,16 @@
-# EasyTier-ESP 文档站 CI
-# 每次 push 构建文档，确保 MDX、侧边栏 slug 与内部链接可用。
+# .cnb.yml
 "**":
   push:
-    - stages:
-        - name: build docs
-          image: node:22
-          script: |
-            corepack enable
-            pnpm install --frozen-lockfile
-            pnpm build
+    - name: sync to gitee
+      imports:
+        - https://cnb.cool/myqfeng/keys/-/blob/main/gitee.yml
+      stages:
+        - name: sync to gitee
+          image: tencentcom/git-sync
+          settings:
+            target_url: https://gitee.com/qteasytier/easytier-esp-docs.git
+            auth_type: https
+            username: ${GIT_USERNAME}
+            password: ${GIT_ACCESS_TOKEN}
+            push_tags: true
+            force: true
