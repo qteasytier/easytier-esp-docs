@@ -87,7 +87,7 @@ description: 选型、部署、配置与运行期的高频问题速答。
 
 #### 内存不够怎么办？
 
-开 PSRAM → 降连接槽/队列/RPC 重组槽 → 降栈（先确认高水位）→ 减少实例。见 [内存与资源](/guide/tuning/memory/)。
+开 PSRAM → 降连接槽/队列/RPC 重组槽 → 降栈（先确认高水位）→ 减少实例。见 [内存与资源](/guide/resource/memory)。
 
 ## 集成细节
 
