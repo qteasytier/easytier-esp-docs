@@ -133,6 +133,7 @@ export default defineConfig({
             { slug: "appendix/faq" },
             { slug: "appendix/cheatsheet" },
             { slug: "appendix/links" },
+            { slug: "appendix/donate" }
           ],
         },
       ],
